@@ -19,8 +19,12 @@ wind from the east, which would make NE and SE upwind (4.4 instead of 4.8 m/s du
 The corner anemometers record speed only. Wind direction is in AWS_Data.csv at the top of the
 dataset: one site weather station, 10 m high, one reading per minute.
 
+The measured fire-head positions and outlines over time come from NIST's validation data
+(firemodels/exp), digitised from CSIRO's photos; every engine is scored against them.
+
 Command:
-  download  fetch the dataset (584 MB) and unpack the C064 and F19 folders and site tables
+  download  fetch the dataset (584 MB) and unpack the C064 and F19 folders and site tables, and
+            fetch NIST's measured fire-head positions into data/raw/csiro/measured/
 """
 
 from __future__ import annotations
@@ -30,12 +34,13 @@ import subprocess
 import zipfile
 from dataclasses import dataclass
 
+import numpy as np
 import pandas as pd
 
-from rxcadre_sim.csiro import CSIRO_RAW_DIR
-from rxcadre_sim.paths import DERIVED_DIR
+from rxcadre_sim.paths import CSIRO_RAW_DIR, DERIVED_DIR
 
 DATASET_URL = "https://data.csiro.au/dap/ws/v2/collections/60062/data/70770839"
+MEASURED_URL = "https://raw.githubusercontent.com/firemodels/exp/master/CSIRO_Grassland_Fires"
 ANNABURROO_DIR = CSIRO_RAW_DIR / "annaburroo"
 FUEL_SAMPLES_CSV = DERIVED_DIR / "csiro_fuel_samples.csv"
 FIRE_NAMES = ("C064", "F19")
@@ -60,8 +65,13 @@ UPWIND_CORNERS = {"C064": UpwindCorners("SE", "SW"), "F19": UpwindCorners("NE", 
 EAST_CORNERS = UpwindCorners("NE", "SE")
 
 
+def head_speed(times_s: np.ndarray, positions_m: np.ndarray) -> float:
+    """Average speed between the first and last observation."""
+    return float((positions_m[-1] - positions_m[0]) / (times_s[-1] - times_s[0]))
+
+
 def download() -> None:
-    """Fetch the dataset zip and unpack the folders of the two fires."""
+    """Fetch the dataset zip, unpack the folders of the two fires and fetch the measured fronts."""
     archive = ANNABURROO_DIR / "dataset.zip"
     if not archive.exists():
         ANNABURROO_DIR.mkdir(parents=True, exist_ok=True)
@@ -71,6 +81,16 @@ def download() -> None:
         site_tables = ["AWS_Data.csv", "Burn_Period_Data.csv", "Plot_Average_Data.csv"]
         dataset.extractall(ANNABURROO_DIR, members=members + site_tables)
     print(f"unpacked {', '.join(FIRE_NAMES)} and the site tables into {ANNABURROO_DIR}")
+    measured_dir = CSIRO_RAW_DIR / "measured"
+    measured_dir.mkdir(parents=True, exist_ok=True)
+    for fire_name in FIRE_NAMES:
+        for kind in ("exp", "flame_position_data", "head_depth"):
+            name = f"Case_{fire_name}_{kind}.csv"
+            subprocess.run(
+                ["curl", "-sfL", "-o", str(measured_dir / name), f"{MEASURED_URL}/{name}"],
+                check=True,
+            )
+    print(f"fetched the measured fire-head positions into {measured_dir}")
 
 
 def _clock_seconds(hhmmss: pd.Series) -> pd.Series:

@@ -28,8 +28,8 @@ import numpy as np
 import pandas as pd
 
 from rxcadre_sim import annaburroo
-from rxcadre_sim.csiro import CSIRO_RAW_DIR, CSIRO_RUNS_DIR, head_speed
-from rxcadre_sim.paths import RUNS_DIR
+from rxcadre_sim.annaburroo import head_speed
+from rxcadre_sim.paths import CSIRO_RAW_DIR, CSIRO_RUNS_DIR, RUNS_DIR
 
 ELMFIRE_DIR = Path(os.environ.get("ELMFIRE_DIR", Path.home() / "elmfire"))
 ELMFIRE_BIN = ELMFIRE_DIR / "build" / "linux" / "bin" / "elmfire"

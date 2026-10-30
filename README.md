@@ -151,9 +151,8 @@ simulator translates these into that simulator's input files:
 
 | Module | Simulator | What it does |
 |---|---|---|
-| `annaburroo.py` | (data) | downloads CSIRO's dataset; reads the corner wind and the typed-in fuel samples (`data/derived/csiro_fuel_samples.csv`) |
-| `csiro.py` | FDS level-set mode 4 | downloads NIST's validation inputs and measured head positions; compares runs with them |
-| `csiro_fds_fast.py` | FDS level-set mode 1 | rewrites NIST's inputs for mode 1 on a 1 m grid with the field grass, wind and lighting |
+| `annaburroo.py` | (data) | downloads CSIRO's dataset and NIST's measured head positions; reads the corner wind and the typed-in fuel samples (`data/derived/csiro_fuel_samples.csv`) |
+| `csiro_fds_fast.py` | FDS level-set | runs NIST's validation inputs as they are (mode 4), and rewrites them for mode 1 on a 1 m grid with the field grass, wind and lighting |
 | `elmfire_csiro.py` | ELMFIRE 1.1 | writes ELMFIRE's GeoTIFF maps and `elmfire.data` for each case, runs it, reads arrival times |
 | `csiro_fds_full.py` | FDS full physics | keeps NIST's full-physics grid and physics, swaps in the 16-patch grass, field wind and lighting |
 
@@ -169,24 +168,20 @@ ELMFIRE must be built in `~/elmfire` (or set `ELMFIRE_DIR`), with GDAL's command
 `PATH` or in the micromamba env `~/micromamba/envs/elmfire` (or set `GDAL_BIN_DIR`).
 
 ```bash
-.venv/bin/python -m rxcadre_sim.annaburroo download      # CSIRO field data (584 MB)
-.venv/bin/python -m rxcadre_sim.csiro download           # NIST level-set inputs + measurements
+.venv/bin/python -m rxcadre_sim.annaburroo download      # CSIRO field data (584 MB) + measurements
+.venv/bin/python -m rxcadre_sim.csiro_fds_fast download  # NIST level-set inputs
 .venv/bin/python -m rxcadre_sim.csiro_fds_full download  # NIST full-physics inputs + results
 
-# FDS level-set mode 4 (NIST's files as they are)
-.venv/bin/python -m rxcadre_sim.csiro setup
-scripts/run_fds_batch.sh runs/csiro
-.venv/bin/python -m rxcadre_sim.csiro compare
+# FDS level-set: NIST's files as they are (mode 4), then mode 1 with the field data (~50 s per
+# case). Compare scores NIST's runs, then every engine (run ELMFIRE first to include it).
+.venv/bin/python -m rxcadre_sim.csiro_fds_fast setup
+.venv/bin/python -m rxcadre_sim.csiro_fds_fast run
+.venv/bin/python -m rxcadre_sim.csiro_fds_fast compare
 
 # ELMFIRE (seconds per case)
 .venv/bin/python -m rxcadre_sim.elmfire_csiro setup
 .venv/bin/python -m rxcadre_sim.elmfire_csiro run
 .venv/bin/python -m rxcadre_sim.elmfire_csiro compare
-
-# FDS level-set mode 1 (about 50 s per case)
-.venv/bin/python -m rxcadre_sim.csiro_fds_fast setup
-scripts/run_fds_batch.sh runs/csiro_fast 4
-.venv/bin/python -m rxcadre_sim.csiro_fds_fast compare
 
 # FDS full physics (4 to 70 min per case on 12 cores; F19 runs on the 1 m grid only)
 .venv/bin/python -m rxcadre_sim.csiro_fds_full setup

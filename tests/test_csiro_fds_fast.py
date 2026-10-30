@@ -3,14 +3,13 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from rxcadre_sim.csiro import CSIRO_RAW_DIR
-from rxcadre_sim.csiro_fds_fast import fast_input, head_positions
+from rxcadre_sim.csiro_fds_fast import NIST_INPUTS_DIR, fast_input, head_positions
 from rxcadre_sim.elmfire_csiro import FIRES, Fuel
 
 C064 = FIRES[0]
 needs_nist_inputs = pytest.mark.skipif(
-    not (CSIRO_RAW_DIR / "inputs" / "Case_C064_LS.fds").exists(),
-    reason="run `python -m rxcadre_sim.csiro download` first",
+    not (NIST_INPUTS_DIR / "Case_C064_LS.fds").exists(),
+    reason="run `python -m rxcadre_sim.csiro_fds_fast download` first",
 )
 
 
