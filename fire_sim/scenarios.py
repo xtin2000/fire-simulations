@@ -18,7 +18,7 @@ from pathlib import Path
 import numpy as np
 from scipy.ndimage import gaussian_filter
 
-from rxcadre_sim.paths import SCENARIOS_DIR
+from fire_sim.paths import SCENARIOS_DIR
 
 GRID_CELLS = 200
 CELL_SIZE_M = 2.0

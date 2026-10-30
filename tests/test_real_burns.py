@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from rxcadre_sim.real_burns import CELL_SIZE_M, MAX_FILL_DISTANCE_M, Grid, fill_gaps, grid_for
+from fire_sim.real_burns import CELL_SIZE_M, MAX_FILL_DISTANCE_M, Grid, fill_gaps, grid_for
 
 
 def test_grid_covers_the_block_with_a_margin():

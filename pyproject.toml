@@ -1,7 +1,7 @@
 [project]
-name = "rxcadre-sim"
+name = "fire-sim"
 version = "0.1.0"
-description = "FDS level-set fire spread calibrated to RxCADRE 2012 S5, plus fictitious scenario generation"
+description = "Real grass fires (RxCADRE 2012, CSIRO 1986) simulated in FDS level-set mode, FDS full physics and ELMFIRE"
 requires-python = ">=3.12"
 
 [tool.ruff]

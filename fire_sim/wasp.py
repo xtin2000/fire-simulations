@@ -17,7 +17,7 @@ import shapefile
 import tifffile
 from matplotlib.path import Path as PolygonPath
 
-from rxcadre_sim.paths import RAW_DIR
+from fire_sim.paths import RAW_DIR
 
 MOSAIC_DIR = RAW_DIR / "wasp_mosaics"
 FRAME_TABLE_DIR = RAW_DIR / "wasp_frames"

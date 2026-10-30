@@ -3,8 +3,8 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from rxcadre_sim.s5_fds_fast import spread_rate_from_arrivals
-from rxcadre_sim.scenario_export import spread_velocity
+from fire_sim.s5_fds_fast import spread_rate_from_arrivals
+from fire_sim.scenario_export import spread_velocity
 
 
 def test_plane_fit_recovers_rate_of_spread_from_sensor_arrivals():

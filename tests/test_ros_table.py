@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from rxcadre_sim.ros_table import TableCase, all_cases, build_input
+from fire_sim.ros_table import TableCase, all_cases, build_input
 
 
 def test_table_covers_every_axis_combination():

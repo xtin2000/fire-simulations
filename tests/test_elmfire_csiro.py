@@ -3,7 +3,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from rxcadre_sim.elmfire_csiro import (
+from fire_sim.elmfire_csiro import (
     CUSTOM_FUEL,
     FIRES,
     NONBURNABLE_FUEL,

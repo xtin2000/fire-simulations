@@ -9,8 +9,8 @@ from __future__ import annotations
 import argparse
 from dataclasses import dataclass
 
-from rxcadre_sim.paths import RAW_DIR
-from rxcadre_sim.remote_zip import extract_members
+from fire_sim.paths import RAW_DIR
+from fire_sim.remote_zip import extract_members
 
 ARCHIVE = "https://www.fs.usda.gov/rds/archive/products"
 

@@ -37,7 +37,7 @@ from dataclasses import dataclass
 import numpy as np
 import pandas as pd
 
-from rxcadre_sim.paths import CSIRO_RAW_DIR, DERIVED_DIR
+from fire_sim.paths import CSIRO_RAW_DIR, DERIVED_DIR
 
 DATASET_URL = "https://data.csiro.au/dap/ws/v2/collections/60062/data/70770839"
 MEASURED_URL = "https://raw.githubusercontent.com/firemodels/exp/master/CSIRO_Grassland_Fires"

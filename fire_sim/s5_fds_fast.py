@@ -31,9 +31,9 @@ from matplotlib.colors import ListedColormap
 from matplotlib.path import Path as PolygonPath
 from scipy.ndimage import gaussian_filter
 
-from rxcadre_sim import s5_data
-from rxcadre_sim.paths import PROJECT_ROOT, RAW_DIR, RUNS_DIR
-from rxcadre_sim.s5_data import ignition_centre_utm, load_perimeter_local, load_sensors_local
+from fire_sim import s5_data
+from fire_sim.paths import PROJECT_ROOT, RAW_DIR, RUNS_DIR
+from fire_sim.s5_data import ignition_centre_utm, load_perimeter_local, load_sensors_local
 
 # Reported in RxCADRE field documentation (two igniters walking outward from the line centre).
 IGNITER_WALK_SPEED_M_S = 1.34

@@ -35,9 +35,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from rxcadre_sim import annaburroo, elmfire_csiro
-from rxcadre_sim.annaburroo import head_speed
-from rxcadre_sim.elmfire_csiro import (
+from fire_sim import annaburroo, elmfire_csiro
+from fire_sim.annaburroo import head_speed
+from fire_sim.elmfire_csiro import (
     FIRES,
     HEAD_STRIP_Y_M,
     Conditions,
@@ -47,7 +47,7 @@ from rxcadre_sim.elmfire_csiro import (
     upwind_corners,
     weather_times,
 )
-from rxcadre_sim.paths import CSIRO_RAW_DIR, CSIRO_RUNS_DIR, PROJECT_ROOT, RUNS_DIR
+from fire_sim.paths import CSIRO_RAW_DIR, CSIRO_RUNS_DIR, PROJECT_ROOT, RUNS_DIR
 
 # NIST runs the level set on three grids: 5 m (LS), 10 m (LS_crude) and 2.5 m (LS_fine) squares.
 NIST_VARIANTS = ("LS", "LS_crude", "LS_fine")

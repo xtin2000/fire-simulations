@@ -5,7 +5,7 @@ import re
 import numpy as np
 import pytest
 
-from rxcadre_sim.scenarios import (
+from fire_sim.scenarios import (
     GRID_CELLS,
     ScenarioSpec,
     build_input,

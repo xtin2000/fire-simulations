@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from rxcadre_sim.annaburroo import head_speed
+from fire_sim.annaburroo import head_speed
 
 
 def test_head_speed_uses_first_and_last_observation():

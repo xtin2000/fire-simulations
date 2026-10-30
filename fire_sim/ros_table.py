@@ -20,7 +20,7 @@ import fdsreader
 import numpy as np
 import pandas as pd
 
-from rxcadre_sim.paths import PROJECT_ROOT
+from fire_sim.paths import PROJECT_ROOT
 
 TABLE_RUNS_DIR = PROJECT_ROOT / "ros_table"
 CELL_SIZE_M = 2.0

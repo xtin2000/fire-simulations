@@ -4,7 +4,7 @@ import re
 
 import pytest
 
-from rxcadre_sim.demo_run import build_input, predicted_speeds, random_inputs
+from fire_sim.demo_run import build_input, predicted_speeds, random_inputs
 
 
 def test_s5_grass_head_speed_matches_the_hand_calculation():

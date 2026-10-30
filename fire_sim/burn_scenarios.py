@@ -19,7 +19,7 @@ import numpy as np
 from matplotlib.path import Path as PolygonPath
 from scipy.ndimage import gaussian_filter
 
-from rxcadre_sim.paths import PROJECT_ROOT
+from fire_sim.paths import PROJECT_ROOT
 
 BURN_SCENARIOS_DIR = PROJECT_ROOT / "burn_scenarios"
 CELL_SIZE_M = 8.0

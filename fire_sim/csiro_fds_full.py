@@ -46,11 +46,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from rxcadre_sim import annaburroo, elmfire_csiro
-from rxcadre_sim.annaburroo import head_speed
-from rxcadre_sim.csiro_fds_fast import _sample_extents, field_wind_lines, head_positions
-from rxcadre_sim.elmfire_csiro import FIRES, Conditions, CsiroFire
-from rxcadre_sim.paths import CSIRO_RAW_DIR, RUNS_DIR
+from fire_sim import annaburroo, elmfire_csiro
+from fire_sim.annaburroo import head_speed
+from fire_sim.csiro_fds_fast import _sample_extents, field_wind_lines, head_positions
+from fire_sim.elmfire_csiro import FIRES, Conditions, CsiroFire
+from fire_sim.paths import CSIRO_RAW_DIR, RUNS_DIR
 
 NIST_FULL_URL = (
     "https://raw.githubusercontent.com/firemodels/fds/FDS-6.11.1/"

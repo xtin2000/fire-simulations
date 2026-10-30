@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from rxcadre_sim.scenarios import DOMAIN_SIZE_M
+from fire_sim.scenarios import DOMAIN_SIZE_M
 
 PANEL_COUNT = 12
 

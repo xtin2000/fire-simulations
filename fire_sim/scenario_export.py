@@ -25,7 +25,7 @@ import numpy as np
 import pandas as pd
 from scipy.ndimage import gaussian_filter
 
-from rxcadre_sim.scenarios import CELL_SIZE_M, ScenarioSpec, fuel_depth_field, wind_ramps
+from fire_sim.scenarios import CELL_SIZE_M, ScenarioSpec, fuel_depth_field, wind_ramps
 
 MAX_REPORTED_ROS_M_S = 2.0
 

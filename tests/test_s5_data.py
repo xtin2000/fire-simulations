@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import pytest
 
-from rxcadre_sim import s5_data
-from rxcadre_sim.paths import RAW_DIR
+from fire_sim import s5_data
+from fire_sim.paths import RAW_DIR
 
 pytestmark = pytest.mark.skipif(
     not (RAW_DIR / "fuels/2012_S5.csv").exists(), reason="raw RxCADRE data not downloaded"

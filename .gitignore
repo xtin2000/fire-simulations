@@ -6,9 +6,9 @@ __pycache__/
 .ruff_cache/
 .DS_Store
 
-# Raw downloads: re-fetch with `python -m rxcadre_sim.download`
+# Raw downloads: re-fetch with `python -m fire_sim.download`
 data/raw/
-# Large derived file: rebuilt by `python -m rxcadre_sim.s5_data prepare`
+# Large derived file: rebuilt by `python -m fire_sim.s5_data prepare`
 data/derived/s5_anemometers.csv
 
 # FDS outputs (re-create by running the inputs); keep inputs, specs and figures
@@ -19,7 +19,7 @@ scenarios/*/*
 !scenarios/*/spec.json
 scenarios/batch.log
 
-# Spread-rate table runs (regenerate with `python -m rxcadre_sim.ros_table write`)
+# Spread-rate table runs (regenerate with `python -m fire_sim.ros_table write`)
 ros_table/
 
 # Burn-scenario inputs (regenerable from seed) and the exported training dataset (too big for git)

@@ -5,7 +5,7 @@ import re
 import numpy as np
 import pytest
 
-from rxcadre_sim.csiro_fds_full import (
+from fire_sim.csiro_fds_full import (
     FULL_INPUTS_DIR,
     MPI_PROCESSES,
     FullCase,
@@ -16,12 +16,12 @@ from rxcadre_sim.csiro_fds_full import (
     furthest_head,
     slice_heads,
 )
-from rxcadre_sim.elmfire_csiro import FIRES
+from fire_sim.elmfire_csiro import FIRES
 
 C064, F19 = FIRES
 needs_nist_inputs = pytest.mark.skipif(
     not (FULL_INPUTS_DIR / "Case_C064.fds").exists(),
-    reason="run `python -m rxcadre_sim.csiro_fds_full download` first",
+    reason="run `python -m fire_sim.csiro_fds_full download` first",
 )
 
 

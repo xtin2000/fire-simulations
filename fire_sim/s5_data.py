@@ -27,8 +27,8 @@ import openpyxl
 import pandas as pd
 import shapefile
 
-from rxcadre_sim import download as rxcadre_download
-from rxcadre_sim.paths import DERIVED_DIR, RAW_DIR
+from fire_sim import download as rxcadre_download
+from fire_sim.paths import DERIVED_DIR, RAW_DIR
 
 S5_DATASETS = ["fuels", "fire_behavior", "survey", "burn_blocks"]
 MG_HA_TO_KG_M2 = 0.1

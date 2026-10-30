@@ -17,7 +17,7 @@ from pathlib import Path
 
 import numpy as np
 
-from rxcadre_sim.paths import RUNS_DIR
+from fire_sim.paths import RUNS_DIR
 
 DOMAIN_M = 400.0
 CELL_M = 2.0

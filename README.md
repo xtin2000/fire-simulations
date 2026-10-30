@@ -1,4 +1,4 @@
-# RxCADRE Simulations
+# Fire Simulations
 
 Physics-based wildfire spread scenarios for drone-based spread prediction research.
 NIST's [Fire Dynamics Simulator (FDS)](https://github.com/firemodels/fds) level-set
@@ -17,9 +17,9 @@ and FDS full physics. See [CSIRO grass fires](#csiro-grass-fires-1986).
 ## Results
 
 **S5 calibration.** All inputs are measured except the fuel-bed depth, the least
-constrained Rothermel input, which was swept (`python -m rxcadre_sim.s5_fds_fast calibrate`).
+constrained Rothermel input, which was swept (`python -m fire_sim.s5_fds_fast calibrate`).
 Every measured value is read directly from the RxCADRE files
-(`python -m rxcadre_sim.s5_data inputs` prints each value with its file, row and column).
+(`python -m fire_sim.s5_data inputs` prints each value with its file, row and column).
 
 | Input | Value | Source |
 |---|---|---|
@@ -105,39 +105,39 @@ python3 -m venv .venv
 
 ```bash
 # 1. Download the public RxCADRE datasets (~400 MB, S5 slices only; also the large-burn
-#    files step 6 needs). `python -m rxcadre_sim.s5_data download` fetches only what S5 needs.
-.venv/bin/python -m rxcadre_sim.download
+#    files step 6 needs). `python -m fire_sim.s5_data download` fetches only what S5 needs.
+.venv/bin/python -m fire_sim.download
 
 # 2. Derive S5 perimeter, sensor arrivals, wind and measured spread rate
-.venv/bin/python -m rxcadre_sim.s5_data prepare
-.venv/bin/python -m rxcadre_sim.s5_data inputs     # every measured input and its source
+.venv/bin/python -m fire_sim.s5_data prepare
+.venv/bin/python -m fire_sim.s5_data inputs     # every measured input and its source
 
 # 3. Build, run and score the calibrated S5 base case in FDS level-set mode 1 (~15 s)
-.venv/bin/python -m rxcadre_sim.s5_fds_fast setup
-.venv/bin/python -m rxcadre_sim.s5_fds_fast run
-.venv/bin/python -m rxcadre_sim.s5_fds_fast compare --detail
-.venv/bin/python -m rxcadre_sim.s5_fds_fast map
+.venv/bin/python -m fire_sim.s5_fds_fast setup
+.venv/bin/python -m fire_sim.s5_fds_fast run
+.venv/bin/python -m fire_sim.s5_fds_fast compare --detail
+.venv/bin/python -m fire_sim.s5_fds_fast map
 
 # Optional: reproduce the calibration sweep, or try best-guess fuel patchworks
-.venv/bin/python -m rxcadre_sim.s5_fds_fast calibrate
-.venv/bin/python -m rxcadre_sim.s5_fds_fast patchwork --seeds 1 2 3
+.venv/bin/python -m fire_sim.s5_fds_fast calibrate
+.venv/bin/python -m fire_sim.s5_fds_fast patchwork --seeds 1 2 3
 
 # 4. Generate and run the fictitious scenarios (~30 min for 100 on 14 cores)
-.venv/bin/python -m rxcadre_sim.scenarios --count 100
+.venv/bin/python -m fire_sim.scenarios --count 100
 scripts/run_fds_batch.sh scenarios 14
 
 # 5. Tabulate FDS head-fire spread rates (1,134 runs, ~3 min)
-.venv/bin/python -m rxcadre_sim.ros_table write
+.venv/bin/python -m fire_sim.ros_table write
 scripts/run_fds_batch.sh ros_table 14
-.venv/bin/python -m rxcadre_sim.ros_table collect --out data/derived/fds_head_ros_table.npz
+.venv/bin/python -m fire_sim.ros_table collect --out data/derived/fds_head_ros_table.npz
 
 # 6. Build the real test burns (L1G, L2G, L2F)
-.venv/bin/python -m rxcadre_sim.real_burns
+.venv/bin/python -m fire_sim.real_burns
 
 # 7. Export ground-truth grids for the drone simulation, and plot an overview
-.venv/bin/python -m rxcadre_sim.scenario_export scenarios/scn* \
+.venv/bin/python -m fire_sim.scenario_export scenarios/scn* \
     --out-dir ../drone_lab/wildfire_spread_prediction/data/fds_scenarios
-.venv/bin/python -m rxcadre_sim.scenario_overview ../drone_lab/wildfire_spread_prediction/data/fds_scenarios
+.venv/bin/python -m fire_sim.scenario_overview ../drone_lab/wildfire_spread_prediction/data/fds_scenarios
 ```
 
 Each exported `scnNNN.npz` holds fire arrival time, spread velocity, fuel load,
@@ -168,27 +168,27 @@ ELMFIRE must be built in `~/elmfire` (or set `ELMFIRE_DIR`), with GDAL's command
 `PATH` or in the micromamba env `~/micromamba/envs/elmfire` (or set `GDAL_BIN_DIR`).
 
 ```bash
-.venv/bin/python -m rxcadre_sim.annaburroo download      # CSIRO field data (584 MB) + measurements
-.venv/bin/python -m rxcadre_sim.csiro_fds_fast download  # NIST level-set inputs
-.venv/bin/python -m rxcadre_sim.csiro_fds_full download  # NIST full-physics inputs + results
+.venv/bin/python -m fire_sim.annaburroo download      # CSIRO field data (584 MB) + measurements
+.venv/bin/python -m fire_sim.csiro_fds_fast download  # NIST level-set inputs
+.venv/bin/python -m fire_sim.csiro_fds_full download  # NIST full-physics inputs + results
 
 # FDS level-set: NIST's files as they are (mode 4), then mode 1 with the field data (~50 s per
 # case). Compare scores NIST's runs, then every engine (run ELMFIRE first to include it).
-.venv/bin/python -m rxcadre_sim.csiro_fds_fast setup
-.venv/bin/python -m rxcadre_sim.csiro_fds_fast run
-.venv/bin/python -m rxcadre_sim.csiro_fds_fast compare
+.venv/bin/python -m fire_sim.csiro_fds_fast setup
+.venv/bin/python -m fire_sim.csiro_fds_fast run
+.venv/bin/python -m fire_sim.csiro_fds_fast compare
 
 # ELMFIRE (seconds per case)
-.venv/bin/python -m rxcadre_sim.elmfire_csiro setup
-.venv/bin/python -m rxcadre_sim.elmfire_csiro run
-.venv/bin/python -m rxcadre_sim.elmfire_csiro compare
+.venv/bin/python -m fire_sim.elmfire_csiro setup
+.venv/bin/python -m fire_sim.elmfire_csiro run
+.venv/bin/python -m fire_sim.elmfire_csiro compare
 
 # FDS full physics (4 to 70 min per case on 12 cores; F19 runs on the 1 m grid only)
-.venv/bin/python -m rxcadre_sim.csiro_fds_full setup
-.venv/bin/python -m rxcadre_sim.csiro_fds_full run
-.venv/bin/python -m rxcadre_sim.csiro_fds_full compare
-.venv/bin/python -m rxcadre_sim.csiro_fds_full heads    # speeds vs CSIRO's burn table
-.venv/bin/python -m rxcadre_sim.csiro_fds_full maps     # arrival maps with the real outlines
+.venv/bin/python -m fire_sim.csiro_fds_full setup
+.venv/bin/python -m fire_sim.csiro_fds_full run
+.venv/bin/python -m fire_sim.csiro_fds_full compare
+.venv/bin/python -m fire_sim.csiro_fds_full heads    # speeds vs CSIRO's burn table
+.venv/bin/python -m fire_sim.csiro_fds_full maps     # arrival maps with the real outlines
 ```
 
 ## Testing
@@ -201,7 +201,7 @@ ELMFIRE must be built in `~/elmfire` (or set `ELMFIRE_DIR`), with GDAL's command
 ## Project layout
 
 ```
-rxcadre_sim/   download; S5 data (s5_data) and its FDS level-set translator (s5_fds_fast);
+fire_sim/   download; S5 data (s5_data) and its FDS level-set translator (s5_fds_fast);
                scenario generation/export/overview; CSIRO translators for FDS and ELMFIRE
 scripts/       FDS batch runner
 data/derived/  small S5 inputs and validation targets (tracked); data/raw/ is downloaded

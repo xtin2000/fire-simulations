@@ -3,7 +3,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from rxcadre_sim.burn_scenarios import (
+from fire_sim.burn_scenarios import (
     atv_crew_size,
     block_mask,
     build_input,

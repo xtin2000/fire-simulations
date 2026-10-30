@@ -22,14 +22,14 @@ from pathlib import Path
 import fdsreader
 import numpy as np
 
-from rxcadre_sim.burn_scenarios import (
+from fire_sim.burn_scenarios import (
     CELL_SIZE_M,
     BurnSpec,
     fuel_depth_field,
     ignition_times,
     wind_ramps,
 )
-from rxcadre_sim.paths import PROJECT_ROOT
+from fire_sim.paths import PROJECT_ROOT
 
 BURN_DATASET_DIR = PROJECT_ROOT / "burn_dataset"
 RAW_OUTPUT_SUFFIXES = (".sf", ".ter", ".smv", ".out", ".bnd", ".csv", ".txt", ".pickle")

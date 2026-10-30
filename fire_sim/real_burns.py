@@ -28,9 +28,9 @@ import shapely
 from matplotlib.path import Path as PolygonPath
 from scipy.ndimage import distance_transform_edt
 
-from rxcadre_sim.ignition import IGNITION_GDB, atv_tracks, untimed_track_layers
-from rxcadre_sim.paths import PROJECT_ROOT, RAW_DIR
-from rxcadre_sim.wasp import arrival_map, burn_block, load_mosaics
+from fire_sim.ignition import IGNITION_GDB, atv_tracks, untimed_track_layers
+from fire_sim.paths import PROJECT_ROOT, RAW_DIR
+from fire_sim.wasp import arrival_map, burn_block, load_mosaics
 
 REAL_BURNS_DIR = PROJECT_ROOT / "real_burns"
 CELL_SIZE_M = 8.0

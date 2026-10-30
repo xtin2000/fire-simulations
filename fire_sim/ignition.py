@@ -7,7 +7,7 @@ import warnings
 import pandas as pd
 import pyogrio
 
-from rxcadre_sim.paths import RAW_DIR
+from fire_sim.paths import RAW_DIR
 
 IGNITION_GDB = RAW_DIR / "ignition/RxCADRE_2011_2012_ignition_data.gdb"
 SITE_LAYER_TAG = {"L1G": "B70CL1G", "L2G": "B70EL2G", "L2F": "B70EL2F"}
