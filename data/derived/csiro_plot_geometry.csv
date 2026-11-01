@@ -1,0 +1,7 @@
+fire,plot_east_west_m,plot_north_south_m,lighting_x_m,lighting_y_m,lighting_length_m,lighting_tilt_deg
+C062,100,100,-2.5,-7,50,0
+C112,100,100,6,-24,50,-38
+E11,194,187,7,40,100,7
+F04,206,201,2,9,175,0
+F05,208,201,6,-6,150,0
+F16,209,191,-2.5,-4,100,0
