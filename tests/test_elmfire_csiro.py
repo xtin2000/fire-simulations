@@ -8,12 +8,17 @@ from fire_sim.elmfire_csiro import (
     FIRES,
     NONBURNABLE_FUEL,
     Conditions,
+    _grid,
+    added_fire,
+    all_fires,
     custom_fuel_row,
     fuel_map,
+    head_distances,
     head_positions,
     lighting_points,
     patchwork_fuel_map,
     plot_average_grass,
+    station_directions,
     wind_2m_maps,
     wind_at_20ft_mph,
 )
@@ -74,3 +79,35 @@ def test_field_wind_varies_across_the_plot_between_the_upwind_corners():
 def test_patchwork_uses_all_16_field_samples():
     fuels = patchwork_fuel_map(C064, Conditions.FIELD)
     assert set(np.unique(fuels)) == {*range(CUSTOM_FUEL, CUSTOM_FUEL + 16), NONBURNABLE_FUEL}
+
+
+def test_off_centre_tilted_lighting_line_keeps_its_centre_and_tilt():
+    c112 = added_fire("C112")
+    points = lighting_points(c112, Conditions.FIELD_STATION)
+    centre = next(p for p in points if p[2] == 0.0)
+    assert centre[:2] == (c112.lighting_x_m, c112.lighting_centre_y_m)
+    north = min(points, key=lambda p: p[1])
+    assert north[0] > centre[0]
+
+
+def test_every_ignition_point_lies_on_burnable_ground():
+    for fire in all_fires():
+        fuels = fuel_map(fire, 1, Conditions.FIELD_STATION)
+        x, y = _grid(fire)
+        for px, py, _ in lighting_points(fire, Conditions.FIELD_STATION):
+            # A point on a cell edge may land in either neighbour.
+            touching = (np.abs(y - py) <= 0.5)[:, None] & (np.abs(x - px) <= 0.5)[None, :]
+            assert (fuels[touching] == 1).any(), (fire.name, px, py)
+
+
+def test_station_wind_from_the_east_comes_from_the_rasters_west():
+    # On F04's day the station wind came from about 80 degrees, behind the east lighting line.
+    directions = station_directions(added_fire("F04"))
+    assert all(240 < d < 300 for d in directions)
+
+
+def test_head_distance_follows_a_real_westward_bearing_down_the_raster_x_axis():
+    arrival = np.full((120, 120), np.nan)
+    arrival[60, 10:41] = np.arange(31)  # column 10 starts at x = 0
+    distance = head_distances(C064, arrival, np.array([30.0]), bearing_deg=270.0)[0]
+    assert distance == pytest.approx(30.5 - C064.lighting_x_m)

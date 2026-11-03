@@ -178,10 +178,11 @@ ELMFIRE must be built in `~/elmfire` (or set `ELMFIRE_DIR`), with GDAL's command
 .venv/bin/python -m fire_sim.csiro_fds_fast run
 .venv/bin/python -m fire_sim.csiro_fds_fast compare
 
-# ELMFIRE (seconds per case)
+# ELMFIRE (seconds per case; setup and run cover all eight fires, about a minute in all)
 .venv/bin/python -m fire_sim.elmfire_csiro setup
 .venv/bin/python -m fire_sim.elmfire_csiro run
-.venv/bin/python -m fire_sim.elmfire_csiro compare
+.venv/bin/python -m fire_sim.elmfire_csiro compare   # C064 and F19 vs NIST's measured heads
+.venv/bin/python -m fire_sim.elmfire_csiro score     # all eight vs CSIRO's burn table
 
 # FDS full physics (4 to 70 min per case on 12 cores; F19 runs on the 1 m grid only)
 .venv/bin/python -m fire_sim.csiro_fds_full setup

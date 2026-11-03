@@ -206,6 +206,12 @@ def weather_station_wind(fire_name: str) -> pd.DataFrame:
     )
 
 
+def plot_average(fire_name: str) -> pd.Series:
+    """CSIRO's plot-average row for a fire: wind, moisture, grass type, load and height."""
+    table = pd.read_csv(ANNABURROO_DIR / "Plot_Average_Data.csv", encoding="latin1")
+    return table.set_index("FireID").loc[fire_name]
+
+
 def fuel_samples(fire_name: str) -> pd.DataFrame:
     """The fire's fuel samples with load in kg/m2 and the grass's blade fineness added."""
     samples = pd.read_csv(FUEL_SAMPLES_CSV).query("fire == @fire_name").reset_index(drop=True)
