@@ -7,9 +7,13 @@ import io
 import re
 import struct
 import subprocess
+import time
 import zipfile
 import zlib
 from pathlib import Path
+
+RETRIES = 8
+MAX_WAIT_S = 60
 
 
 class HttpRangeFile(io.RawIOBase):
@@ -73,19 +77,42 @@ def extract_members(
 
 
 def _fetch_member(url: str, info: zipfile.ZipInfo) -> bytes:
-    local_header = _curl_range(url, info.header_offset, info.header_offset + 29)
-    name_length, extra_length = struct.unpack("<HH", local_header[26:30])
-    data_start = info.header_offset + 30 + name_length + extra_length
-    compressed = _curl_range(url, data_start, data_start + info.compress_size - 1)
-    if info.compress_type == zipfile.ZIP_STORED:
-        return compressed
-    return zlib.decompress(compressed, -zlib.MAX_WBITS)
+    # The archive server now and then answers a range request with the wrong bytes,
+    # so each member is checked against its CRC and fetched again if it does not match.
+    for attempt in range(RETRIES):
+        local_header = _curl_range(url, info.header_offset, info.header_offset + 29)
+        name_length, extra_length = struct.unpack("<HH", local_header[26:30])
+        data_start = info.header_offset + 30 + name_length + extra_length
+        compressed = _curl_range(url, data_start, data_start + info.compress_size - 1)
+        try:
+            data = (
+                compressed
+                if info.compress_type == zipfile.ZIP_STORED
+                else zlib.decompress(compressed, -zlib.MAX_WBITS)
+            )
+        except zlib.error:
+            data = b""
+        if zlib.crc32(data) == info.CRC:
+            return data
+        _wait(attempt)
+    raise RuntimeError(f"{info.filename}: download kept failing its checksum ({url})")
 
 
 def _curl_range(url: str, start: int, end: int) -> bytes:
-    return subprocess.run(
-        ["curl", "-sL", "-r", f"{start}-{end}", url], check=True, capture_output=True
-    ).stdout
+    for attempt in range(RETRIES):
+        data = subprocess.run(
+            ["curl", "-sL", "-r", f"{start}-{end}", url], check=True, capture_output=True
+        ).stdout
+        if len(data) == end - start + 1:
+            return data
+        _wait(attempt)
+    raise RuntimeError(f"bytes {start}-{end} of {url}: the server kept sending the wrong length")
+
+
+def _wait(attempt: int) -> None:
+    seconds = min(2**attempt, MAX_WAIT_S)
+    print(f"  the archive server sent a bad answer; trying again in {seconds} s")
+    time.sleep(seconds)
 
 
 def main() -> None:

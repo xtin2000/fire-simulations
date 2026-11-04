@@ -126,10 +126,14 @@ def download() -> None:
         subprocess.run(["curl", "-sfL", "-o", str(archive), DATASET_URL], check=True)
     with zipfile.ZipFile(archive) as dataset:
         unpacked = (*FIRE_NAMES, *ADDED_FIRE_NAMES)
-        members = [m for m in dataset.namelist() if m.split("/")[0] in unpacked]
+        site_files = ("Site and block maps", "ReadMe - datafile descriptions.txt")
+        members = [m for m in dataset.namelist() if m.split("/")[0] in (*unpacked, *site_files)]
         site_tables = ["AWS_Data.csv", "Burn_Period_Data.csv", "Plot_Average_Data.csv"]
         dataset.extractall(ANNABURROO_DIR, members=members + site_tables)
-    print(f"unpacked {', '.join(unpacked)} and the site tables into {ANNABURROO_DIR}")
+    print(
+        f"unpacked {', '.join(unpacked)}, the site tables, the site maps and the ReadMe "
+        f"into {ANNABURROO_DIR}"
+    )
     measured_dir = CSIRO_RAW_DIR / "measured"
     measured_dir.mkdir(parents=True, exist_ok=True)
     for fire_name in FIRE_NAMES:

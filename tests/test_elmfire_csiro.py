@@ -3,6 +3,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
+from fire_sim.annaburroo import ANNABURROO_DIR
 from fire_sim.elmfire_csiro import (
     CUSTOM_FUEL,
     FIRES,
@@ -24,6 +25,10 @@ from fire_sim.elmfire_csiro import (
 )
 
 C064, F19 = FIRES
+needs_csiro_data = pytest.mark.skipif(
+    not (ANNABURROO_DIR / "Burn_Period_Data.csv").exists(),
+    reason="run `python -m fire_sim.annaburroo download` first",
+)
 
 
 def test_wind_at_20ft_is_faster_than_at_2m():
@@ -66,10 +71,12 @@ def test_field_lighting_starts_at_the_centre_and_walks_at_the_measured_pace():
     assert (times[0.0], times[86.0]) == (0.0, pytest.approx(86 * 56 / 88))
 
 
+@needs_csiro_data
 def test_field_wind_has_a_map_every_5_seconds_until_the_end():
     assert len(wind_2m_maps(F19, Conditions.FIELD)) == 37
 
 
+@needs_csiro_data
 def test_field_wind_varies_across_the_plot_between_the_upwind_corners():
     first = wind_2m_maps(F19, Conditions.FIELD)[0]
     # At lighting the right (NE) corner read 5.2 m/s and the left (SE) corner 3.9 m/s.
@@ -81,6 +88,7 @@ def test_patchwork_uses_all_16_field_samples():
     assert set(np.unique(fuels)) == {*range(CUSTOM_FUEL, CUSTOM_FUEL + 16), NONBURNABLE_FUEL}
 
 
+@needs_csiro_data
 def test_off_centre_tilted_lighting_line_keeps_its_centre_and_tilt():
     c112 = added_fire("C112")
     points = lighting_points(c112, Conditions.FIELD_STATION)
@@ -90,6 +98,7 @@ def test_off_centre_tilted_lighting_line_keeps_its_centre_and_tilt():
     assert north[0] > centre[0]
 
 
+@needs_csiro_data
 def test_every_ignition_point_lies_on_burnable_ground():
     for fire in all_fires():
         fuels = fuel_map(fire, 1, Conditions.FIELD_STATION)
@@ -100,6 +109,7 @@ def test_every_ignition_point_lies_on_burnable_ground():
             assert (fuels[touching] == 1).any(), (fire.name, px, py)
 
 
+@needs_csiro_data
 def test_station_wind_from_the_east_comes_from_the_rasters_west():
     # On F04's day the station wind came from about 80 degrees, behind the east lighting line.
     directions = station_directions(added_fire("F04"))
