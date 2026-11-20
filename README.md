@@ -155,6 +155,9 @@ simulator translates these into that simulator's input files:
 | `csiro_fds_fast.py` | FDS level-set | runs NIST's validation inputs as they are (mode 4), and rewrites them for mode 1 on a 1 m grid with the field grass, wind and lighting |
 | `elmfire_csiro.py` | ELMFIRE 1.1 | writes ELMFIRE's GeoTIFF maps and `elmfire.data` for each case, runs it, reads arrival times |
 | `csiro_fds_full.py` | FDS full physics | keeps NIST's full-physics grid and physics, swaps in the 16-patch grass, field wind and lighting |
+| `wrf_sfire_csiro.py` | WRF-SFIRE | writes WRF's idealised fire case (fuel map, namelists, one steady wind profile) for all eight fires, runs `ideal.exe` and `wrf.exe`, reads arrival times onto ELMFIRE's grid |
+| `engine_output.py` | (all three) | reads each engine's output into one `FireRun`: arrival time on a common 1 m grid, same orientation and units; side-by-side `summary` and `export` to `runs/unified/` |
+| `validation_metrics.py` | (scoring) | Dice, Jaccard, detection and false-alarm rates and outline distances against NIST's measured outlines (C064, F19); time to 80 % of the mapped distance for all eight fires |
 
 Fire-head speed against CSIRO's burn table (real: C064 1.18 m/s, F19 1.85 m/s), measured
 inputs, nothing tuned:
@@ -163,6 +166,14 @@ inputs, nothing tuned:
 |---|---|---|
 | ELMFIRE | 24 % | 44 % |
 | FDS full physics | 88 % | 81 % |
+
+WRF-SFIRE reaches 80 % of the mapped distance 1.5 to 4 times sooner than the real fire on all
+eight fires; ELMFIRE gets there only on F19. End-to-end head speed flatters WRF-SFIRE (its head
+stops at the plot edge), so `validation_metrics.py timing` is the score to use.
+
+WRF-SFIRE must be built in `~/git/WRF-SFIRE` (or set `WRF_SFIRE_DIR`) with its micromamba env
+`~/micromamba/envs/wrf-sfire` (or set `WRF_ENV_BIN_DIR`). This build stops with an error if the
+fuel table sets `fz0` or `fwh`, so both stay at WRF-SFIRE's grass defaults.
 
 ELMFIRE must be built in `~/elmfire` (or set `ELMFIRE_DIR`), with GDAL's command-line tools on
 `PATH` or in the micromamba env `~/micromamba/envs/elmfire` (or set `GDAL_BIN_DIR`).
@@ -184,12 +195,24 @@ ELMFIRE must be built in `~/elmfire` (or set `ELMFIRE_DIR`), with GDAL's command
 .venv/bin/python -m fire_sim.elmfire_csiro compare   # C064 and F19 vs NIST's measured heads
 .venv/bin/python -m fire_sim.elmfire_csiro score     # all eight vs CSIRO's burn table
 
+# WRF-SFIRE (about half a minute per case on one core; 30 cases)
+.venv/bin/python -m fire_sim.wrf_sfire_csiro setup
+.venv/bin/python -m fire_sim.wrf_sfire_csiro run
+.venv/bin/python -m fire_sim.wrf_sfire_csiro compare # C064 and F19; prints the wind the fire saw
+.venv/bin/python -m fire_sim.wrf_sfire_csiro score   # all eight vs CSIRO's burn table
+
 # FDS full physics (4 to 70 min per case on 12 cores; F19 runs on the 1 m grid only)
 .venv/bin/python -m fire_sim.csiro_fds_full setup
 .venv/bin/python -m fire_sim.csiro_fds_full run
 .venv/bin/python -m fire_sim.csiro_fds_full compare
 .venv/bin/python -m fire_sim.csiro_fds_full heads    # speeds vs CSIRO's burn table
 .venv/bin/python -m fire_sim.csiro_fds_full maps     # arrival maps with the real outlines
+
+# Same scores for every engine (run the engines above first)
+.venv/bin/python -m fire_sim.engine_output summary      # C064, F19: the three engines side by side
+.venv/bin/python -m fire_sim.engine_output export       # common-grid arrival maps to runs/unified/
+.venv/bin/python -m fire_sim.validation_metrics shape   # C064, F19: overlap and outline distance
+.venv/bin/python -m fire_sim.validation_metrics timing  # all eight: time to 80 % of the distance
 ```
 
 ## Testing
@@ -203,7 +226,7 @@ ELMFIRE must be built in `~/elmfire` (or set `ELMFIRE_DIR`), with GDAL's command
 
 ```
 fire_sim/   download; S5 data (s5_data) and its FDS level-set translator (s5_fds_fast);
-               scenario generation/export/overview; CSIRO translators for FDS and ELMFIRE
+               scenario generation/export/overview; CSIRO translators for FDS, ELMFIRE and WRF-SFIRE; validation_metrics
 scripts/       FDS batch runner
 data/derived/  small S5 inputs and validation targets (tracked); data/raw/ is downloaded
 runs/          S5 base and calibration cases (inputs tracked, FDS outputs ignored);
