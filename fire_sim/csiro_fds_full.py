@@ -242,14 +242,13 @@ def field_wind(fire: CsiroFire, conditions: Conditions, *, turns_with_station: b
     return "\n".join(lines)
 
 
-def full_input(case: FullCase) -> str:
-    """NIST's full-mode input for one fire with the field grass, wind and lighting."""
+def field_input(text: str, case: FullCase, light) -> str:
+    """A NIST-style input with the field grass, wind and lighting; `light` writes the lighting."""
     fire = case.fire
-    text = (FULL_INPUTS_DIR / f"{nist_name(fire, case.grid)}.fds").read_text()
     text = re.sub(r"CHID='[^']*'", f"CHID='{case.name}'", text)
     text = explicit_meshes(text)
     text = patchwork_grass(text, fire)
-    text = field_lighting(text, fire)
+    text = light(text, fire)
     wind = field_wind(fire, case.conditions, turns_with_station=case.turns_with_station)
     text = NIST_WIND.sub(lambda _: wind, text)
     # NIST's slices come at three photo times; arrival maps need every second at the ground.
@@ -264,24 +263,35 @@ def full_input(case: FullCase) -> str:
     return "\n".join(lines) + "\n"
 
 
+def full_input(case: FullCase) -> str:
+    """NIST's full-mode input for one fire with the field grass, wind and lighting."""
+    text = (FULL_INPUTS_DIR / f"{nist_name(case.fire, case.grid)}.fds").read_text()
+    return field_input(text, case, field_lighting)
+
+
+def write_case(case: FullCase, text: str) -> Path:
+    """Write one case's input and the grass chemistry file it includes."""
+    case_dir = RUNS_FULL_DIR / case.name
+    case_dir.mkdir(parents=True, exist_ok=True)
+    (case_dir / f"{case_dir.name}.fds").write_text(text)
+    (case_dir / "vegetation_model.txt").write_text(
+        (FULL_INPUTS_DIR / "vegetation_model.txt").read_text()
+    )
+    return case_dir
+
+
 def setup() -> None:
     for case in RUN_CASES:
-        case_dir = RUNS_FULL_DIR / case.name
-        case_dir.mkdir(parents=True, exist_ok=True)
-        (case_dir / f"{case_dir.name}.fds").write_text(full_input(case))
-        (case_dir / "vegetation_model.txt").write_text(
-            (FULL_INPUTS_DIR / "vegetation_model.txt").read_text()
-        )
-        print(case_dir)
+        print(write_case(case, full_input(case)))
 
 
-def run() -> None:
-    """Run each unfinished case with MPI, in the order of RUN_CASES.
+def run_cases(cases: tuple[FullCase, ...]) -> None:
+    """Run each unfinished case with MPI, in order.
 
     F19's larger meshes overflow macOS's default 8 MB stack, so the stack is raised to the
     hard limit.
     """
-    for case in RUN_CASES:
+    for case in cases:
         case_dir = RUNS_FULL_DIR / case.name
         if _completed(case_dir):
             continue
@@ -291,6 +301,11 @@ def run() -> None:
             f"mpirun -n {MPI_PROCESSES} fds {case_dir.name}.fds > run.log 2>&1"
         )
         subprocess.run(["zsh", "-c", command], cwd=case_dir, check=True)
+
+
+def run() -> None:
+    """Run each unfinished case of NIST's two fires, in the order of RUN_CASES."""
+    run_cases(RUN_CASES)
 
 
 def _completed(case_dir: Path) -> bool:
