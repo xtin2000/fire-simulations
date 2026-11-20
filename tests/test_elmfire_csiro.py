@@ -9,11 +9,11 @@ from fire_sim.elmfire_csiro import (
     FIRES,
     NONBURNABLE_FUEL,
     Conditions,
-    _grid,
     added_fire,
     all_fires,
     custom_fuel_row,
     fuel_map,
+    grid,
     head_distances,
     head_positions,
     lighting_points,
@@ -102,7 +102,7 @@ def test_off_centre_tilted_lighting_line_keeps_its_centre_and_tilt():
 def test_every_ignition_point_lies_on_burnable_ground():
     for fire in all_fires():
         fuels = fuel_map(fire, 1, Conditions.FIELD_STATION)
-        x, y = _grid(fire)
+        x, y = grid(fire)
         for px, py, _ in lighting_points(fire, Conditions.FIELD_STATION):
             # A point on a cell edge may land in either neighbour.
             touching = (np.abs(y - py) <= 0.5)[:, None] & (np.abs(x - px) <= 0.5)[None, :]

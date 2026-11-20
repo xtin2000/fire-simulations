@@ -289,7 +289,7 @@ def weather_times(fire: CsiroFire, conditions: Conditions) -> np.ndarray:
     return np.arange(0.0, fire.end_time_s + MEASURED_WIND_STEP_S, MEASURED_WIND_STEP_S)
 
 
-def _grid(fire: CsiroFire) -> tuple[np.ndarray, np.ndarray]:
+def grid(fire: CsiroFire) -> tuple[np.ndarray, np.ndarray]:
     """Cell-centre x (columns) and y (rows, north first) of the domain."""
     margin = fire.domain_margin_m
     x = np.arange(-margin, fire.plot_length_m + margin, CELL_SIZE_M) + CELL_SIZE_M / 2
@@ -304,7 +304,7 @@ def wind_2m_maps(fire: CsiroFire, conditions: Conditions) -> list[np.ndarray]:
     NIST: one steady value everywhere. Field: the two upwind corners every 5 s, varying in a
     straight line across the plot between them and held beyond the plot's sides.
     """
-    x, y = _grid(fire)
+    x, y = grid(fire)
     if conditions is Conditions.NIST:
         return [np.full((len(y), len(x)), fire.wind_2m_m_s, dtype=np.float32)]
     measured = annaburroo.upwind_wind(fire.name, corners=upwind_corners(fire, conditions))
@@ -333,7 +333,7 @@ def station_directions(fire: CsiroFire) -> np.ndarray:
 
 def _burnable(fire: CsiroFire, conditions: Conditions) -> np.ndarray:
     """The plot plus the 5 m wide strip along the lighting line."""
-    x, y = _grid(fire)
+    x, y = grid(fire)
     xx, yy = np.meshgrid(x, y)
     on_plot = (xx >= 0) & (xx <= fire.plot_length_m) & (np.abs(yy) <= fire.plot_half_width_m)
     tilt = math.radians(fire.lighting_tilt_deg)
@@ -356,7 +356,7 @@ def fuel_map(
 
 def patchwork_fuel_map(fire: CsiroFire, conditions: Conditions) -> np.ndarray:
     """Each grass cell takes the fuel model of its nearest field sample."""
-    x, y = _grid(fire)
+    x, y = grid(fire)
     xx, yy = np.meshgrid(x, y)
     samples = annaburroo.fuel_samples(fire.name)
     distances = np.hypot(
@@ -372,7 +372,7 @@ def _gdal_env() -> dict[str, str]:
 
 def _write_geotiff(bands: list[np.ndarray], fire: CsiroFire, path: Path) -> None:
     """Write bands as a raw BIL raster with a header, then let GDAL turn it into a GeoTIFF."""
-    x, y = _grid(fire)
+    x, y = grid(fire)
     stack = np.stack(bands, axis=1)  # BIL order: row, band, column
     is_float = stack.dtype.kind == "f"
     raw = path.with_suffix(".bil")
@@ -552,7 +552,7 @@ def read_arrival_times(case_dir: Path) -> np.ndarray:
 
 def head_positions(fire: CsiroFire, arrival_s: np.ndarray, times_s: np.ndarray) -> np.ndarray:
     """Furthest downwind burned x in NIST's head strip, at each time."""
-    x, y = _grid(fire)
+    x, y = grid(fire)
     in_strip = (y > HEAD_STRIP_Y_M[0]) & (y < HEAD_STRIP_Y_M[1])
     strip = arrival_s[in_strip]
     positions = []
@@ -578,7 +578,7 @@ def head_distances(
 
     The raster is the real plot turned half a turn, so the real bearing turns with it.
     """
-    x, y = _grid(fire)
+    x, y = grid(fire)
     xx, yy = np.meshgrid(x, y)
     raster_bearing = math.radians(bearing_deg + 180.0)
     along = (xx - fire.lighting_x_m) * math.sin(raster_bearing) + (
@@ -650,7 +650,7 @@ def draw_station_maps(fires: tuple[CsiroFire, ...]) -> Path:
         if not any((case_dir / "outputs").glob("time_of_arrival_*.bil")):
             continue
         arrival = read_arrival_times(case_dir)
-        x, y = _grid(fire)
+        x, y = grid(fire)
         # Turn the raster back half a turn so north is up and east is right.
         real = arrival[::-1, ::-1]
         extent = (-x[-1] - 0.5, -x[0] + 0.5, -y[0] - 0.5, -y[-1] + 0.5)
@@ -684,7 +684,7 @@ def draw_arrival_maps() -> Path:
         outlines = pd.read_csv(
             CSIRO_RAW_DIR / "measured" / f"Case_{fire.name}_flame_position_data.csv"
         )
-        x, y = _grid(fire)
+        x, y = grid(fire)
         extent = (x[0] - 0.5, x[-1] + 0.5, y[-1] - 0.5, y[0] + 0.5)
         for row, (fuel, conditions) in enumerate(CASES):
             ax = axes[row, column]
