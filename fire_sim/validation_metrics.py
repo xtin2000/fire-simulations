@@ -216,7 +216,7 @@ def timing() -> None:
         runs = [
             engine_output.from_elmfire(fire, Fuel.PATCHWORK, Conditions.FIELD_STATION),
             engine_output.from_wrf_sfire(fire, Fuel.PATCHWORK, Conditions.FIELD_STATION),
-            engine_output.from_fds_full(fire),
+            engine_output.from_fds_full(fire, turns_with_station=True),
         ]
         for run in filter(None, runs):
             reached_s = engine_output.engine_time_to_fraction(run)

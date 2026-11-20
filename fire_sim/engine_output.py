@@ -122,9 +122,9 @@ def from_wrf_sfire(fire: CsiroFire, fuel: Fuel, conditions: Conditions) -> FireR
 MESH_CORNER = re.compile(r"&MESH IJK=[\d,]+, XB=([-\d.]+),[-\d.]+,([-\d.]+),")
 
 
-def fds_full_case(fire: CsiroFire) -> full.FullCase:
-    """The 1 m full-physics run with the field wind and lighting (NIST's two fires), or the
-    run with the station's wind direction (the six added fires)."""
+def fds_full_case(fire: CsiroFire, *, turns_with_station: bool = False) -> full.FullCase:
+    """The 1 m full-physics run with the field wind and lighting of NIST's two fires, turning
+    with the station's direction if asked; the six added fires always turn with it."""
     if fire not in elm.FIRES:
         return next(c for c in added.added_cases() if c.fire.name == fire.name)
     return next(
@@ -133,7 +133,7 @@ def fds_full_case(fire: CsiroFire) -> full.FullCase:
         if c.fire is fire
         and c.grid is full.Grid.ONE_METRE
         and c.conditions is Conditions.FIELD
-        and not c.turns_with_station
+        and c.turns_with_station is turns_with_station
     )
 
 
@@ -143,11 +143,11 @@ def fds_domain_corner(fds_input: str) -> tuple[float, float]:
     return min(x for x, _ in corners), min(y for _, y in corners)
 
 
-def from_fds_full(fire: CsiroFire) -> FireRun | None:
+def from_fds_full(fire: CsiroFire, *, turns_with_station: bool = False) -> FireRun | None:
     """FDS's 1 m cells are centred half a metre in from its domain corner; its arrival map is
     put on ELMFIRE's grid cell by cell, nearest first (the grids differ by at most half a cell,
     and by the plot's far side where an added fire's domain is bigger)."""
-    case = fds_full_case(fire)
+    case = fds_full_case(fire, turns_with_station=turns_with_station)
     folder = full.RUNS_FULL_DIR / case.name
     if not full._completed(folder):
         return None

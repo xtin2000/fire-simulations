@@ -38,3 +38,8 @@ def test_fds_domain_corner_is_the_lowest_mesh_corner() -> None:
         "&MESH IJK=20,20,20, XB=10,30,-40,-20,0,20, MPI_PROCESS=0 /\n"
     )
     assert engine_output.fds_domain_corner(meshes) == (-10.0, -60.0)
+
+
+def test_fds_timing_case_turns_with_the_station_like_the_other_engines() -> None:
+    for fire in elm.FIRES:
+        assert engine_output.fds_full_case(fire, turns_with_station=True).turns_with_station

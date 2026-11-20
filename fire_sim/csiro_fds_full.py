@@ -120,6 +120,7 @@ RUN_CASES = (
     FullCase(C064, Grid.ONE_METRE, Conditions.FIELD_EAST),
     FullCase(C064, Grid.ONE_METRE, Conditions.FIELD_EAST, turns_with_station=True),
     FullCase(F19, Grid.ONE_METRE, turns_with_station=True),
+    FullCase(C064, Grid.ONE_METRE, turns_with_station=True),
 )
 
 
