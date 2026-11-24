@@ -6,8 +6,10 @@ Two kinds of score:
   (overlap), probability of detection and false alarm ratio (missed and invented fire), and the
   mean and worst distance between the two outlines. They exist only for C064 and F19, the two
   fires NIST measured outlines for.
-* State scores keep three states per cell (not burned, burning, burned) and count every
-  real/simulated pair in a 3x3 confusion matrix, giving precision, detection and F1 per state.
+* State scores keep three states per cell (-1 not burned, 0 burning, +1 burned) and count every
+  real/simulated pair in a 3x3 confusion matrix, giving precision, detection and Dice per state.
+  Each pair is also a hit, miss (simulator behind), false alarm (simulator ahead) or neither,
+  and the reach of both fires from the lighting line is compared direction by direction.
 * Timing scores compare when the head reaches 80 % of the mapped distance. They exist for all
   eight fires, because CSIRO's burn table gives the head position for each of them.
 
@@ -37,20 +39,33 @@ from fire_sim.paths import CSIRO_RAW_DIR, RUNS_DIR
 MAX_OUTLINE_END_X_M = 40.0
 
 
+# Flame depth over spread rate in CSIRO's burn table: 5.6 m / 1.18 m/s = 4.7 s for C064 at 53 s,
+# 9.5 m / 1.52 m/s = 6.2 s for F19 at 86 s. One value for both fires and all engines.
+BURNING_S = 5.0
+DIRECTION_BIN_DEG = 5.0
+
+
 class CellState(IntEnum):
-    NOT_BURNED = 1
-    BURNING = 2
-    BURNED = 3
+    NOT_BURNED = -1
+    BURNING = 0
+    BURNED = 1
 
 
 FIRE_STATES = (CellState.BURNING, CellState.BURNED)
+
+
+class Outcome(IntEnum):
+    NEITHER = 0
+    HIT = 1
+    MISS = 2
+    FALSE_ALARM = 3
 
 
 @dataclass(frozen=True)
 class StateScores:
     precision: float
     detection: float
-    f1: float
+    dice: float
 
 
 @dataclass(frozen=True)
@@ -116,24 +131,77 @@ def fire_reached(states: np.ndarray) -> np.ndarray:
 
 def confusion_matrix(real: np.ndarray, simulated: np.ndarray) -> np.ndarray:
     """Cell counts with rows = real state and columns = simulated state, in CellState order."""
-    pair_index = (real.astype(int) - 1) * 3 + (simulated.astype(int) - 1)
+    pair_index = (real.astype(int) + 1) * 3 + (simulated.astype(int) + 1)
     return np.bincount(pair_index.ravel(), minlength=9).reshape(3, 3)
 
 
 def state_scores(matrix: np.ndarray, state: CellState) -> StateScores:
     """One state against the other two: precision down its column, detection along its row."""
-    index = state - 1
+    index = state + 1
     hits = matrix[index, index]
     simulated_total, real_total = matrix[:, index].sum(), matrix[index, :].sum()
     precision = hits / simulated_total if simulated_total else 0.0
     detection = hits / real_total if real_total else 0.0
-    f1 = 2 * hits / (simulated_total + real_total) if simulated_total + real_total else 0.0
-    return StateScores(float(precision), float(detection), float(f1))
+    dice = 2 * hits / (simulated_total + real_total) if simulated_total + real_total else 0.0
+    return StateScores(float(precision), float(detection), float(dice))
 
 
-def mean_fire_f1(matrix: np.ndarray) -> float:
-    """F1 averaged over burning and burned; not burned is left out, as in Dice."""
-    return float(np.mean([state_scores(matrix, state).f1 for state in FIRE_STATES]))
+def mean_fire_dice(matrix: np.ndarray) -> float:
+    """Dice averaged over burning and burned; not burned is left out, as in the binary Dice."""
+    return float(np.mean([state_scores(matrix, state).dice for state in FIRE_STATES]))
+
+
+def outcomes(real: np.ndarray, simulated: np.ndarray) -> np.ndarray:
+    """Each cell's Outcome. States are ordered by how far the fire has got, so a simulated
+    state above the real one is the simulator ahead (false alarm), below it behind (miss)."""
+    result = np.full(real.shape, Outcome.NEITHER, dtype=np.int8)
+    result[simulated > real] = Outcome.FALSE_ALARM
+    result[simulated < real] = Outcome.MISS
+    result[(simulated == real) & (real != CellState.NOT_BURNED)] = Outcome.HIT
+    return result
+
+
+def outcome_counts(cell_outcomes: np.ndarray) -> dict[str, int]:
+    counts = np.bincount(cell_outcomes.ravel(), minlength=len(Outcome))
+    return {outcome.name.lower(): int(counts[outcome]) for outcome in Outcome}
+
+
+def compass_bearings_deg(dx: np.ndarray, dy: np.ndarray) -> np.ndarray:
+    """Compass bearing of each offset; the simulation frame is the real plot turned half a turn."""
+    return (np.degrees(np.arctan2(dx, dy)) + 180.0) % 360.0
+
+
+def reach_by_direction(
+    burned: np.ndarray, x: np.ndarray, y: np.ndarray, origin: tuple[float, float]
+) -> np.ndarray:
+    """Farthest burned cell from origin (m) in each DIRECTION_BIN_DEG compass sector, 0 if none."""
+    xx, yy = np.meshgrid(x, y)
+    dx, dy = xx[burned] - origin[0], yy[burned] - origin[1]
+    sector = (compass_bearings_deg(dx, dy) // DIRECTION_BIN_DEG).astype(int)
+    reach = np.zeros(int(360 / DIRECTION_BIN_DEG))
+    np.maximum.at(reach, sector, np.hypot(dx, dy))
+    return reach
+
+
+def direction_bearings_deg() -> np.ndarray:
+    """Centre of each compass sector that reach_by_direction uses."""
+    return np.arange(0.0, 360.0, DIRECTION_BIN_DEG) + DIRECTION_BIN_DEG / 2
+
+
+def speed_difference_by_direction(
+    real_burned: np.ndarray,
+    simulated_burned: np.ndarray,
+    x: np.ndarray,
+    y: np.ndarray,
+    *,
+    origin: tuple[float, float],
+    time_s: float,
+) -> np.ndarray:
+    """Simulated minus real average spread speed (m/s) from origin in each compass sector:
+    + the simulator is faster that way, - slower. A difference, not a ratio, so a direction
+    only one fire reached stays finite."""
+    simulated_reach = reach_by_direction(simulated_burned, x, y, origin)
+    return (simulated_reach - reach_by_direction(real_burned, x, y, origin)) / time_s
 
 
 def signed_boundary_distance(predicted: np.ndarray, observed: np.ndarray, cell_m: float) -> float:
@@ -184,6 +252,28 @@ def real_burned_areas(
         burned = burned | outline_mask(x, y, outline)
         areas[time_s] = burned
     return areas
+
+
+def real_arrival_times(burned_areas: dict[float, np.ndarray], lit: np.ndarray) -> np.ndarray:
+    """Arrival time (s) of the real fire in each cell, NaN past the last outline.
+
+    Between two outlines the time is interpolated by distance: a cell a third of the way from
+    the earlier edge to the later one gets a third of the time between them. Before the first
+    outline the earlier edge is the lighting line at time 0, which ignores the minute or so
+    the lighting took; scoring after the first outline does not depend on it.
+    """
+    arrival = np.full(lit.shape, np.nan)
+    arrival[lit] = 0.0
+    earlier_time, earlier = 0.0, lit
+    for time_s, burned in sorted(burned_areas.items()):
+        ring = burned & ~earlier
+        # Both edges lie half a cell beyond the centres of the cells either side of them.
+        from_earlier = ndimage.distance_transform_edt(~earlier)[ring] - 0.5
+        to_later = ndimage.distance_transform_edt(burned)[ring] - 0.5
+        share = from_earlier / (from_earlier + to_later)
+        arrival[ring] = earlier_time + share * (time_s - earlier_time)
+        earlier_time, earlier = time_s, earlier | burned
+    return arrival
 
 
 def shape() -> None:

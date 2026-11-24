@@ -158,6 +158,7 @@ simulator translates these into that simulator's input files:
 | `wrf_sfire_csiro.py` | WRF-SFIRE | writes WRF's idealised fire case (fuel map, namelists, one steady wind profile) for all eight fires, runs `ideal.exe` and `wrf.exe`, reads arrival times onto ELMFIRE's grid |
 | `engine_output.py` | (all three) | reads each engine's output into one `FireRun`: arrival time on a common 1 m grid, same orientation and units; side-by-side `summary` and `export` to `runs/unified/` |
 | `validation_metrics.py` | (scoring) | Dice, Jaccard, detection and false-alarm rates and outline distances against NIST's measured outlines (C064, F19); time to 80 % of the mapped distance for all eight fires |
+| `moment_scores.py` | (scoring) | C064 and F19 at one moment: 3x3 state confusion matrix, map of hits, misses and false alarms, and simulated minus real spread speed by compass bearing |
 
 Fire-head speed against CSIRO's burn table (real: C064 1.18 m/s, F19 1.85 m/s), measured
 inputs, nothing tuned:
@@ -213,6 +214,7 @@ ELMFIRE must be built in `~/elmfire` (or set `ELMFIRE_DIR`), with GDAL's command
 .venv/bin/python -m fire_sim.engine_output export       # common-grid arrival maps to runs/unified/
 .venv/bin/python -m fire_sim.validation_metrics shape   # C064, F19: overlap and outline distance
 .venv/bin/python -m fire_sim.validation_metrics timing  # all eight: time to 80 % of the distance
+.venv/bin/python -m fire_sim.moment_scores run          # C064, F19: states, outcomes, speed by direction
 ```
 
 ## Testing

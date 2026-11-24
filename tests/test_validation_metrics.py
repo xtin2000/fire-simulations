@@ -64,7 +64,7 @@ def test_outline_mask_fills_the_closed_outline() -> None:
 @pytest.fixture
 def meeting_example_matrix() -> np.ndarray:
     """The 4x4 grid example from the 17 Nov meeting, as (real, simulated) state pairs."""
-    pairs = [(1, 1)] * 11 + [(1, 3), (2, 1), (2, 2), (3, 2), (3, 3)]
+    pairs = [(-1, -1)] * 11 + [(-1, 1), (0, -1), (0, 0), (1, 0), (1, 1)]
     real, simulated = (np.array(states).reshape(4, 4) for states in zip(*pairs, strict=True))
     return vm.confusion_matrix(real, simulated)
 
@@ -88,17 +88,17 @@ def test_state_scores_of_the_meeting_example(meeting_example_matrix: np.ndarray)
     ]
 
 
-def test_mean_fire_f1_leaves_out_not_burned(meeting_example_matrix: np.ndarray) -> None:
-    assert vm.mean_fire_f1(meeting_example_matrix) == 0.5
+def test_mean_fire_dice_leaves_out_not_burned(meeting_example_matrix: np.ndarray) -> None:
+    assert vm.mean_fire_dice(meeting_example_matrix) == 0.5
 
 
 def test_cell_states_split_burning_from_burned(spreading_fire_arrival_s: np.ndarray) -> None:
     states = vm.cell_states(spreading_fire_arrival_s, time_s=10.0, burning_s=4.0)
-    assert states[0, [6, 7, 10, 11]].tolist() == [3, 2, 2, 1]
+    assert states[0, [6, 7, 10, 11]].tolist() == [1, 0, 0, -1]
 
 
 def test_never_reached_cells_stay_not_burned() -> None:
-    assert vm.cell_states(np.array([np.nan]), time_s=100.0, burning_s=5.0)[0] == 1
+    assert vm.cell_states(np.array([np.nan]), time_s=100.0, burning_s=5.0)[0] == -1
 
 
 def test_identical_fire_has_only_diagonal_counts(spreading_fire_arrival_s: np.ndarray) -> None:
@@ -142,3 +142,50 @@ def test_real_burned_area_keeps_ground_inside_earlier_outlines() -> None:
     late_starting_away_from_line = np.array([[5.0, 0.0], [5.0, 10.0], [8.0, 10.0], [8.0, 0.0]])
     areas = vm.real_burned_areas(x, y, {10.0: early, 20.0: late_starting_away_from_line})
     assert areas[20.0][5, 1]
+
+
+@pytest.mark.parametrize(
+    ("real", "simulated", "expected"),
+    [
+        (-1, -1, vm.Outcome.NEITHER),
+        (-1, 0, vm.Outcome.FALSE_ALARM),
+        (-1, 1, vm.Outcome.FALSE_ALARM),
+        (0, -1, vm.Outcome.MISS),
+        (0, 0, vm.Outcome.HIT),
+        (0, 1, vm.Outcome.FALSE_ALARM),
+        (1, -1, vm.Outcome.MISS),
+        (1, 0, vm.Outcome.MISS),
+        (1, 1, vm.Outcome.HIT),
+    ],
+)
+def test_each_state_pair_has_the_agreed_outcome(
+    real: int, simulated: int, expected: vm.Outcome
+) -> None:
+    assert vm.outcomes(np.array([real]), np.array([simulated]))[0] == expected
+
+
+def test_reach_by_direction_finds_the_farthest_burned_cell_each_way() -> None:
+    x = y = np.arange(-10, 11, dtype=float)
+    burned = np.zeros((y.size, x.size), dtype=bool)
+    burned[10, 10:18] = True
+    reach = vm.reach_by_direction(burned, x, y, origin=(0.0, 0.0))
+    west_sector = int(270 / vm.DIRECTION_BIN_DEG)
+    assert (reach[west_sector], reach.sum()) == (7.0, 7.0)
+
+
+def test_speed_difference_is_positive_where_the_simulator_spreads_farther() -> None:
+    x = y = np.arange(-10, 11, dtype=float)
+    real, simulated = (np.zeros((y.size, x.size), dtype=bool) for _ in range(2))
+    real[10, 10:15] = True
+    simulated[10, 10:19] = True
+    difference = vm.speed_difference_by_direction(
+        real, simulated, x, y, origin=(0.0, 0.0), time_s=2.0
+    )
+    assert difference.max() == 2.0
+
+
+def test_real_arrival_is_interpolated_between_outlines() -> None:
+    lit = square(slice(None), slice(0, 1))
+    areas = {10.0: square(slice(None), slice(0, 5)), 20.0: square(slice(None), slice(0, 15))}
+    arrival = vm.real_arrival_times(areas, lit)
+    assert arrival[0, [0, 4, 9, 14]] == pytest.approx([0.0, 10.0, 15.0, 20.0], abs=1.5)
